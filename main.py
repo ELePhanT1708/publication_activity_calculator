@@ -50,10 +50,11 @@ class Watcher:
 
 
 if __name__ == '__main__':
-    university = 'Баумана'
-    # university = ''
-    author_name = 'Королева М Н'
-    year_from = '2011'
+    # university = 'Баумана'
+    university = ''
+    # author_name = 'Королева М Н'
+    author_name = 'Гаврюшин С С'
+    year_from = '2018'
     year_till = '2023'
     ScienceParser = Watcher()
     ScienceParser.driver.get(url='https://elibrary.ru/querybox.asp?scope=newquery')
@@ -130,7 +131,8 @@ if __name__ == '__main__':
     print(article_links_list)
 
     ## cycle for links
-    for link in article_links_list[:10]:
+    for link in article_links_list[:]:
+        time.sleep(1)
         ScienceParser.driver.get(url=link)
         ## parsing article page
         # title
@@ -138,7 +140,7 @@ if __name__ == '__main__':
                                                                     '/tr/td/table[1]/tbody/tr/td[2]'
                                                                     '/table/tbody/tr[2]/td[1]/table[2]'
                                                                     '/tbody/tr/td[2]/span/b/p').text
-        print(title_article)
+        # print(title_article)
         # authors
         authors = ScienceParser.driver.find_elements(By.XPATH,
                                                      '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td[2]/table/tbody'
@@ -148,17 +150,81 @@ if __name__ == '__main__':
         author_text = []
         for author in authors:
             text = author.text
-            print(text)
+            # print(text)
             if text[-1] == ',':
-                text, job_place = text[:-3], text[-2]
-                print(text)
-                print(job_place)
+                text, job_place_id = text[:-3], text[-2]
+                # print(text)
+                # print(job_place_id)
             else:
-                text, job_place = text[:-1], text[-1]
-                print(text)
-                print(job_place)
+                text, job_place_id = text[:-1], text[-1]
+                # print(text)
+                # print(job_place_id)
+        # job
+        job_places = ScienceParser.driver.find_elements(By.XPATH,
+                                                        '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td[2]/table'
+                                                        '/tbody/tr[2]/td[1]/div/table[1]/tbody/tr/td[2]/span')
+        job_dict = {i + 1: f'{job.text}' for i, job in zip(range(len(job_places)), job_places)}
+        print(f'{job_dict=}')
 
-#
+        # journal
+        journal = ScienceParser.driver.find_element(By.XPATH,
+                                                    '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td['
+                                                    '2]/table/tbody/tr[2]/td[1]/div/table[3]/tbody/tr[2]/td[2]/a')
+
+        print(f'{journal.text=}')
+        title = journal.text
+        journal.click()
+        try:
+            ScienceParser.driver.find_element(By.XPATH,
+                                              '//*[@id="thepage"]/table/tbody/tr/td/table[1]/tbody/tr/td['
+                                              '2]/form/table/tbody/tr[2]/td[1]/table[2]/tbody/tr/td/div['
+                                              '1]/a/font/b').click()
+        except:
+            pass
+
+        journal_link = ScienceParser.driver.current_url
+        print(f'{journal_link=}')
+        # new version pf representation
+        if 'new' in journal_link:
+            states = ScienceParser.driver.find_elements(By.XPATH, '//*[@id="thepage"]/table/tbody/tr/td/table/tbody'
+                                                                  '/tr/td/form/table/tbody/tr/td/table/tbody/tr/td'
+                                                                  '/table/tbody/tr/td/table/tbody/tr/td')
+            print(states)
+            wos_index = False
+            scopus_index = False
+            for state in states:
+
+                if 'Web of Science' in state.text:
+                    print(state.text)
+                    if ': да' in state.text:
+                        wos_index = True
+                if 'Scopus' in state.text:
+                    print(state.text)
+                    if ': да' in state.text:
+                        scopus_index = True
+            print('WoS', wos_index, 'SCOPUS', scopus_index)
+        else:
+            states = ScienceParser.driver.find_elements(By.XPATH, '/html/body/table/tbody/tr/td/table/tbody/tr/td'
+                                                                  '/table/tbody/tr/td/table/tbody/tr/td')
+            print(f'{states=}')
+            print(f'{len(states)=}')
+            wos_index = False
+            scopus_index = False
+            for i, state in enumerate(states):
+                if 'Web of Science' in state.text:
+                    print(f'{state.text=}')
+                    print(f'{i=}')
+                    if i + 1 == len(states):
+                        wos_index = True
+                    elif 'да' in states[i+1].text:
+                        wos_index = True
+                if 'SCOPUS' in state.text:
+                    print(f'{state.text=}')
+                    print(f'{i=}')
+                    if 'да' in states[i+1].text:
+                        scopus_index = True
+            print('WoS', wos_index, 'SCOPUS', scopus_index)
+
 # {
 #   "https://elibrary.ru/item.asp?id=49940309": {
 #     "Название статьи": "К ВОПРОСУ О ФОРМАЛИЗАЦИИ ЭТИКИ ПОВЕДЕНИЯ КОЛЛАБОРАТИВНОГО РОБОТА",
