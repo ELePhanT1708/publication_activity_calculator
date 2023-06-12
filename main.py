@@ -50,12 +50,14 @@ class Watcher:
 
 
 if __name__ == '__main__':
-    # university = 'Баумана'
-    university = ''
-    # author_name = 'Королева М Н'
-    author_name = 'Гаврюшин С С'
+    university = 'Баумана'
+    # university = ''
+    author_name = 'Королева М Н'
+    # author_name = 'Зудина О В'
     year_from = '2018'
     year_till = '2023'
+
+
     ScienceParser = Watcher()
     ScienceParser.driver.get(url='https://elibrary.ru/querybox.asp?scope=newquery')
     add_author_button = ScienceParser.driver.find_element(By.XPATH,
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     for article_element in article_links:
         article_links_list.append(article_element.get_attribute("href"))
     print(article_links_list)
-
+    articles_with_author = {}
     ## cycle for links
     for link in article_links_list[:]:
         time.sleep(1)
@@ -147,7 +149,7 @@ if __name__ == '__main__':
                                                      '/tr[2]/td[1]/div/table[1]/tbody/tr/td[2]/div')
         if len(authors) > 1:
             authors = authors[:-1]
-        author_text = []
+        authors_dict = {}
         for author in authors:
             text = author.text
             # print(text)
@@ -159,10 +161,16 @@ if __name__ == '__main__':
                 text, job_place_id = text[:-1], text[-1]
                 # print(text)
                 # print(job_place_id)
+            authors_dict[f'{text}'] = {
+                'job_place_id': job_place_id,
+                'student': False,
+                'job_two_or_more': False
+            }
         # job
         job_places = ScienceParser.driver.find_elements(By.XPATH,
                                                         '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td[2]/table'
                                                         '/tbody/tr[2]/td[1]/div/table[1]/tbody/tr/td[2]/span')
+        print(f'{len(job_places)=}')
         job_dict = {i + 1: f'{job.text}' for i, job in zip(range(len(job_places)), job_places)}
         print(f'{job_dict=}')
 
@@ -172,7 +180,7 @@ if __name__ == '__main__':
                                                     '2]/table/tbody/tr[2]/td[1]/div/table[3]/tbody/tr[2]/td[2]/a')
 
         print(f'{journal.text=}')
-        title = journal.text
+        journal_title = journal.text
         journal.click()
         try:
             ScienceParser.driver.find_element(By.XPATH,
@@ -216,15 +224,29 @@ if __name__ == '__main__':
                     print(f'{i=}')
                     if i + 1 == len(states):
                         wos_index = True
-                    elif 'да' in states[i+1].text:
+                    elif 'да' in states[i + 1].text:
                         wos_index = True
                 if 'SCOPUS' in state.text:
                     print(f'{state.text=}')
                     print(f'{i=}')
-                    if 'да' in states[i+1].text:
+                    if i + 1 == len(states):
+                        wos_index = True
+                    elif 'да' in states[i + 1].text:
                         scopus_index = True
             print('WoS', wos_index, 'SCOPUS', scopus_index)
-
+        journal_dict = {
+            'title': journal_title,
+            'link': journal_link,
+            'WoS': wos_index,
+            'SCOPUS': scopus_index
+        }
+        articles_with_author[f'{link}'] = {
+            'title': title_article,
+            'authors': authors_dict,
+            'job_places': job_dict,
+            'journal': journal_dict
+        }
+    print(articles_with_author)
 # {
 #   "https://elibrary.ru/item.asp?id=49940309": {
 #     "Название статьи": "К ВОПРОСУ О ФОРМАЛИЗАЦИИ ЭТИКИ ПОВЕДЕНИЯ КОЛЛАБОРАТИВНОГО РОБОТА",
