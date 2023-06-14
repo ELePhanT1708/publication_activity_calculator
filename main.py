@@ -2,6 +2,7 @@ import json
 import os
 from typing import List
 
+import selenium as selenium
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service
@@ -52,16 +53,33 @@ class Watcher:
 if __name__ == '__main__':
     university = 'Баумана'
     # university = ''
-    author_name = 'Королева М Н'
-    # author_name = 'Зудина О В'
+    # author_name = 'Королева М Н'
+    author_name = 'Блохин М А'
     year_from = '2018'
     year_till = '2023'
-
+    login = "khikmatullin_ramil"
+    password = ""
 
     ScienceParser = Watcher()
+
+    ScienceParser.driver.get(url='https://elibrary.ru/querybox.asp?scope=newquery')
+    # authorization
+
+    ScienceParser.driver.find_element(By.XPATH,
+                                      '//*[@id="win_login"]/table/tbody/tr/td/table[1]/tbody/tr['
+                                      '6]/td/input').send_keys(login)
+
+    ScienceParser.driver.find_element(By.XPATH,
+                                      '//*[@id="win_login"]/table/tbody/tr/td/table[1]/tbody/tr['
+                                      '8]/td/input').send_keys(password)
+    ScienceParser.driver.find_element(By.XPATH,
+                                      '//*[@id="win_login"]/table/tbody/tr/td/table[1]/tbody/tr['
+                                      '9]/td/input').click()
+    #author search
     ScienceParser.driver.get(url='https://elibrary.ru/querybox.asp?scope=newquery')
     add_author_button = ScienceParser.driver.find_element(By.XPATH,
-                                                          '/html/body/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/table[6]/tbody/tr[1]/td[3]/a')
+                                                          '/html/body/table/tbody/tr/td/table/tbody/tr/td['
+                                                          '2]/table/tbody/tr/td/table[6]/tbody/tr[1]/td[3]/a')
     add_author_button.click()
     # new window for author search
     window_before = ScienceParser.driver.window_handles[0]
@@ -123,9 +141,10 @@ if __name__ == '__main__':
                                                                 '/table/tbody/tr/td/table[11]/tbody/tr/td[6]/a')
     search_button.click()
 
+
     ## Coolecting link for all articles
     # hardcode for articles less than 100
-    article_links = ScienceParser.driver.find_elements(By.XPATH, r'//td[2]/a')[3:-7]
+    article_links = ScienceParser.driver.find_elements(By.XPATH, r'//td[2]/a')[:-7]
     print(len(article_links))
     article_links_list = []
     for article_element in article_links:
@@ -133,7 +152,7 @@ if __name__ == '__main__':
     print(article_links_list)
     articles_with_author = {}
     ## cycle for links
-    for link in article_links_list[:]:
+    for link in article_links_list:
         time.sleep(1)
         ScienceParser.driver.get(url=link)
         ## parsing article page
@@ -170,11 +189,19 @@ if __name__ == '__main__':
         job_places = ScienceParser.driver.find_elements(By.XPATH,
                                                         '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td[2]/table'
                                                         '/tbody/tr[2]/td[1]/div/table[1]/tbody/tr/td[2]/span')
+        # if len(job_places):
+        #     job_places = ScienceParser.driver.find_elements(By.XPATH,
+        #                                                     '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td[2]/table'
+        #                                                     '/tbody/tr[2]/td[1]/div/table[1]/tbody/tr/td[2]/font[2]')
+        #     print(f'{len(job_places)=}')
+        #     job_dict = {i + 1: f'{job.text}' for i, job in zip(range(len(job_places)), job_places)}
+        #     print(f'{job_dict=}')
+        # else:
         print(f'{len(job_places)=}')
         job_dict = {i + 1: f'{job.text}' for i, job in zip(range(len(job_places)), job_places)}
         print(f'{job_dict=}')
 
-        # journal
+            # journal
         journal = ScienceParser.driver.find_element(By.XPATH,
                                                     '/html/body/table/tbody/tr/td/table[1]/tbody/tr/td['
                                                     '2]/table/tbody/tr[2]/td[1]/div/table[3]/tbody/tr[2]/td[2]/a')
@@ -182,6 +209,7 @@ if __name__ == '__main__':
         print(f'{journal.text=}')
         journal_title = journal.text
         journal.click()
+
         try:
             ScienceParser.driver.find_element(By.XPATH,
                                               '//*[@id="thepage"]/table/tbody/tr/td/table[1]/tbody/tr/td['
@@ -204,11 +232,11 @@ if __name__ == '__main__':
 
                 if 'Web of Science' in state.text:
                     print(state.text)
-                    if ': да' in state.text:
+                    if ': да' in state.text or ': переводная версия' in state.text:
                         wos_index = True
                 if 'Scopus' in state.text:
                     print(state.text)
-                    if ': да' in state.text:
+                    if ': да' in state.text or ': переводная версия' in state.text:
                         scopus_index = True
             print('WoS', wos_index, 'SCOPUS', scopus_index)
         else:
@@ -224,14 +252,14 @@ if __name__ == '__main__':
                     print(f'{i=}')
                     if i + 1 == len(states):
                         wos_index = True
-                    elif 'да' in states[i + 1].text:
+                    elif 'да' in states[i + 1].text or ': переводная версия' in state[i + 1].text:
                         wos_index = True
                 if 'SCOPUS' in state.text:
                     print(f'{state.text=}')
                     print(f'{i=}')
                     if i + 1 == len(states):
                         wos_index = True
-                    elif 'да' in states[i + 1].text:
+                    elif 'да' in states[i + 1].text or ': переводная версия' in state[i + 1].text:
                         scopus_index = True
             print('WoS', wos_index, 'SCOPUS', scopus_index)
         journal_dict = {
